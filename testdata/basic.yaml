@@ -1,0 +1,14 @@
+targets:
+	test:
+		type: directory
+		path: /tmp
+    notifications:
+			http:
+				- url: ""
+					method: ""
+				- url: ""
+					method: ""
+		actions:
+			http:
+
+
