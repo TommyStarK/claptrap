@@ -17,3 +17,6 @@
 # mac
 .DS_Store
 
+# go tools
+coverage.out
+
