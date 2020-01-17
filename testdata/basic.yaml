@@ -2,12 +2,24 @@
 
 path: /tmp
 create:
-	- http: "notification"
-		url: "http://localhost:8080/debug"
-		method: "POST"
-		headers:
-			accept: "application/json"
-			content-type: "application/json"
+  - http: "notification"
+    url: "http://localhost:8080/debug/notification"
+    method: "POST"
+  - http: "notification"
+    url: "http://localhost:8080/debug/notification/custom"
+    method: "POST"
+    headers:
+      accept: "application/json"
+      content-type: "application/json"
+
+  - http: "send"
+    url: "http://localhost:8080/debug/send"
+
+  - action: "remove"
+  - action: "zip"
+    command: "debug"
+    a: "a"
+    b: "b"
 
 
 ...
