@@ -1,14 +1,13 @@
-targets:
-	test:
-		type: directory
-		path: /tmp
-    notifications:
-			http:
-				- url: ""
-					method: ""
-				- url: ""
-					method: ""
-		actions:
-			http:
+---
+
+path: /tmp
+create:
+	- http: "notification"
+		url: "http://localhost:8080/debug"
+		method: "POST"
+		headers:
+			accept: "application/json"
+			content-type: "application/json"
 
 
+...
