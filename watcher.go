@@ -16,6 +16,7 @@ var eventTypes = map[fsnotify.Op]string{
 }
 
 type event fsnotify.Event
+
 type watcher struct {
 	events     chan event
 	fsnWatcher *fsnotify.Watcher

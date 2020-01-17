@@ -21,13 +21,7 @@ func newClaptrap(cfg *config) (*claptrap, error) {
 	events := make(chan event)
 	sigchan := make(chan os.Signal, 1)
 
-	signal.Notify(sigchan,
-		os.Interrupt,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGHUP,
-		syscall.SIGQUIT,
-		syscall.SIGKILL)
+	signal.Notify(sigchan, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
 	w, err := newWatcher(cfg.Path, events, errors)
 	if err != nil {
