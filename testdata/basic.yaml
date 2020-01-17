@@ -1,25 +1,26 @@
 ---
-
 path: /tmp
-create:
-  - http: "notification"
-    url: "http://localhost:8080/debug/notification"
-    method: "POST"
-  - http: "notification"
-    url: "http://localhost:8080/debug/notification/custom"
-    method: "POST"
-    headers:
-      accept: "application/json"
-      content-type: "application/json"
-
-  - http: "send"
-    url: "http://localhost:8080/debug/send"
-
-  - action: "remove"
-  - action: "zip"
-    command: "debug"
-    a: "a"
-    b: "b"
-
-
+events:
+  new:
+    - http: "send"
+      url: "http://localhost:8080/debug/send"
+  update:
+    - http: "notification"
+      url: "http://localhost:8080/debug/notification/:dummyParam"
+      method: "POST"
+      headers:
+          - "[accept]=[application/json]"
+      params:
+          - "[dummyParam]=[1234]"
+      queries:
+          - "[dummyQuery]=[5678]"
+      json_body: '
+      {
+          "debug": "ok"
+      }
+      '
+remove:
+    - http: "notification"
+      url: "http://localhost:8080/debug/notification"
+      method: "POST"
 ...

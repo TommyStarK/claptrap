@@ -17,18 +17,23 @@ func TestConvertSignalToInt(t *testing.T) {
 		sigterm = os.Signal(syscall.SIGTERM)
 	)
 
-	if convertSignalToInt(sigint) != 2+128 {
-		t.Logf("return code should be equal to 2+128")
+	if convertSignalToInt(sigint) != 2 {
+		t.Logf("return code should be equal to 2")
 		t.Fail()
 	}
 
-	if convertSignalToInt(sigkill) != 9+128 {
-		t.Logf("return code should be equal to 9+128")
+	if convertSignalToInt(sigkill) != 9 {
+		t.Logf("return code should be equal to 9")
 		t.Fail()
 	}
 
-	if convertSignalToInt(sigterm) != 15+128 {
-		t.Logf("return code should be equal to 15+128")
+	if convertSignalToInt(sigterm) != 15 {
+		t.Logf("return code should be equal to 15")
+		t.Fail()
+	}
+
+	if convertSignalToInt(nil) != 1 {
+		t.Logf("return code should be equal to 1")
 		t.Fail()
 	}
 }

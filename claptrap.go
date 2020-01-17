@@ -26,7 +26,7 @@ func newClaptrap(cfg *config) (*claptrap, error) {
 
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
-	w, err := newWatcher(cfg.Path, events, errors)
+	w, err := newWatcher(cfg.path, events, errors)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,8 @@ func (c *claptrap) trap() {
 		select {
 		case sig, ok := <-c.sigchan:
 			if !ok {
-
+				os.Exit(1)
+				return
 			}
 
 			atomic.StoreUint32(&c.clapMustStop, 1)
@@ -83,17 +84,18 @@ func (c *claptrap) trap() {
 			}
 
 			os.Exit(convertSignalToInt(sig))
+			return
 
 		case event, ok := <-c.events:
-			if !ok {
-
+			if !ok || event == nil {
+				return
 			}
 
 			go c.clap(event)
 
 		case err, ok := <-c.errors:
-			if !ok {
-
+			if !ok || err == nil {
+				return
 			}
 
 			log.Println("error: ", err)
@@ -102,15 +104,20 @@ func (c *claptrap) trap() {
 }
 
 func convertSignalToInt(sig os.Signal) (rc int) {
+	rc = 1
+
+	if sig == nil {
+		return
+	}
+
 	switch sig.String() {
 	case os.Interrupt.String():
-		rc = 2 + 128
+		rc = 2
 	case os.Kill.String():
-		rc = 9 + 128
+		rc = 9
 	case "terminated":
-		rc = 15 + 128
+		rc = 15
 	default:
-		rc = 1
 	}
 
 	return

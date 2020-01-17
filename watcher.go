@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -39,7 +40,12 @@ func newWatcher(path string, events chan *event, errs chan error) (*watcher, err
 	}
 
 	if err := fsnWatcher.Add(path); err != nil {
-		fsnWatcher.Close()
+		defer func() {
+			if err := fsnWatcher.Close(); err != nil {
+				log.Printf("failed to close fsnotify watcher: %s", err.Error())
+			}
+		}()
+
 		return nil, err
 	}
 
@@ -127,14 +133,16 @@ func (w *watcher) watch() {
 
 		case e, ok := <-w.fsnWatcher.Events:
 			if !ok {
-
+				w.events <- nil
+				return
 			}
 
 			go w.processEvent(e)
 
 		case err, ok := <-w.fsnWatcher.Errors:
 			if !ok {
-
+				w.errs <- nil
+				return
 			}
 
 			w.errs <- err

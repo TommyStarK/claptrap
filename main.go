@@ -8,7 +8,7 @@ func init() {
 
 func main() {
 	var cfg = &config{
-		Path: ".",
+		path: ".",
 	}
 
 	app, err := newClaptrap(cfg)
