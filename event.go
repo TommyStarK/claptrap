@@ -1,47 +1,51 @@
 package main
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/fsnotify/fsnotify"
+)
 
 type event struct {
 	mutex sync.Mutex
 
 	name  string
-	trace map[uint32]string
+	trace map[fsnotify.Op]string
 }
 
 func (e *event) chmod(timestamp string) {
 	e.mutex.Lock()
-	e.trace[chmod] = timestamp
+	e.trace[fsnotify.Chmod] = timestamp
 	e.mutex.Unlock()
 }
 
 func (e *event) create(timestamp string) {
 	e.mutex.Lock()
-	e.trace[create] = timestamp
+	e.trace[fsnotify.Create] = timestamp
 	e.mutex.Unlock()
 }
 
 func (e *event) remove(timestamp string) {
 	e.mutex.Lock()
-	e.trace[remove] = timestamp
+	e.trace[fsnotify.Remove] = timestamp
 	e.mutex.Unlock()
 }
 
 func (e *event) rename(timestamp string) {
 	e.mutex.Lock()
-	e.trace[rename] = timestamp
+	e.trace[fsnotify.Rename] = timestamp
 	e.mutex.Unlock()
 }
 
 func (e *event) write(timestamp string) {
 	e.mutex.Lock()
-	e.trace[write] = timestamp
+	e.trace[fsnotify.Write] = timestamp
 	e.mutex.Unlock()
 }
 
-func (e *event) isReadyForProcess() bool {
+func (e *event) isReadyForBeingProcessed() bool {
 	e.mutex.Lock()
-	timestamp, ok := e.trace[remove]
+	timestamp, ok := e.trace[fsnotify.Remove]
 	e.mutex.Unlock()
 
 	if ok && len(timestamp) > 0 {
@@ -49,14 +53,14 @@ func (e *event) isReadyForProcess() bool {
 	}
 
 	e.mutex.Lock()
-	timestamp, ok = e.trace[rename]
+	timestamp, ok = e.trace[fsnotify.Rename]
 	e.mutex.Unlock()
 
 	if ok && len(timestamp) > 0 {
 		return true
 	}
 
-	var witness uint32
+	var witness fsnotify.Op
 	e.mutex.Lock()
 	for k, v := range e.trace {
 		if len(v) > 0 {
@@ -65,7 +69,7 @@ func (e *event) isReadyForProcess() bool {
 	}
 	e.mutex.Unlock()
 
-	if witness&write != 0 && witness&chmod != 0 {
+	if witness&fsnotify.Write != 0 && witness&fsnotify.Chmod != 0 {
 		return true
 	}
 

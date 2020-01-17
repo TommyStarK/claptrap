@@ -8,14 +8,6 @@ import (
 	"syscall"
 )
 
-var evenTypeToString = map[uint32]string{
-	create: "create",
-	write:  "write",
-	remove: "remove",
-	rename: "rename",
-	chmod:  "chmod",
-}
-
 type claptrap struct {
 	config  *config
 	events  chan *event
@@ -59,8 +51,8 @@ func (c *claptrap) clap(event *event) {
 	}
 
 	log.Printf("claptrap event on: %s", event.name)
-	for k, v := range event.trace {
-		log.Printf("-------> Type: %s  @@@  %s", evenTypeToString[k], v)
+	for fsnotifyEventType, timestamp := range event.trace {
+		log.Printf("-------> Type: %s  @@@  %s", fsnotifyEventType.String(), timestamp)
 	}
 }
 
@@ -78,13 +70,12 @@ func (c *claptrap) trap() {
 
 			if err := c.watcher.stop(); err != nil {
 				log.Printf("failed to gracefully stop the watcher: %s", err.Error())
-			} else {
-				log.Println("watcher has stopped ...")
 			}
 
 			close(c.sigchan)
 			close(c.errors)
 			close(c.events)
+
 			log.Println("claptrap exiting ...")
 
 			if c.testMode {

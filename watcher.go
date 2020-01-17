@@ -2,20 +2,11 @@ package main
 
 import (
 	"errors"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-)
-
-const (
-	create = uint32(fsnotify.Create)
-	write  = uint32(fsnotify.Write)
-	remove = uint32(fsnotify.Remove)
-	rename = uint32(fsnotify.Rename)
-	chmod  = uint32(fsnotify.Chmod)
 )
 
 type watcher struct {
@@ -48,6 +39,7 @@ func newWatcher(path string, events chan *event, errs chan error) (*watcher, err
 	}
 
 	if err := fsnWatcher.Add(path); err != nil {
+		fsnWatcher.Close()
 		return nil, err
 	}
 
@@ -84,7 +76,7 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 		var newEvent = &event{
 			mutex: sync.Mutex{},
 			name:  fsevent.Name,
-			trace: make(map[uint32]string),
+			trace: make(map[fsnotify.Op]string),
 		}
 
 		targetEvent = newEvent
@@ -93,20 +85,20 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 		w.rwmutex.Unlock()
 	}
 
-	switch uint32(fsevent.Op) {
-	case create:
+	switch fsevent.Op {
+	case fsnotify.Create:
 		targetEvent.create(timestamp)
-	case write:
+	case fsnotify.Write:
 		targetEvent.write(timestamp)
-	case remove:
+	case fsnotify.Remove:
 		targetEvent.remove(timestamp)
-	case rename:
+	case fsnotify.Rename:
 		targetEvent.rename(timestamp)
-	case chmod:
+	case fsnotify.Chmod:
 		targetEvent.chmod(timestamp)
 	}
 
-	if targetEvent.isReadyForProcess() && atomic.LoadUint32(&w.processingMustStop) == 0 {
+	if targetEvent.isReadyForBeingProcessed() && atomic.LoadUint32(&w.processingMustStop) == 0 {
 		w.rwmutex.Lock()
 		w.events <- targetEvent
 		delete(w.trace, targetEvent.name)
@@ -117,7 +109,6 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 }
 
 func (w *watcher) stop() error {
-	log.Println("stopping watcher ...")
 	atomic.StoreUint32(&w.processingMustStop, 1)
 	ch := make(chan struct{})
 	w.stopWatching <- ch
