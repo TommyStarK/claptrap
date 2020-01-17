@@ -7,11 +7,14 @@ func init() {
 }
 
 func main() {
-	app, err := newClaptrap()
+	var cfg = &config{
+		Path: ".",
+	}
+
+	app, err := newClaptrap(cfg)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	app.add(".")
 	app.trap()
 }
