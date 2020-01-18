@@ -3,7 +3,7 @@
 Monitor file/folder, and trigger whatever action you wish. HTTP notification, file backup
 or anything that cross your mind. With the go plugin you can implement your own magic !
 
-> Built easily thanks to [fsnotify](https://> github.com/fsnotify/fsnotify) :sunglasses:.
+> Built easily thanks to [fsnotify](https://github.com/fsnotify/fsnotify) :sunglasses:.
 
 - Download
 
@@ -41,8 +41,5 @@ $ ./claptrap -path=. -plugin=example/demo
 
 It's ready !! To test it you can edit the README and remove this line :sunglasses:.
 
-
-- Write your plugin
-
 Take a look at the [example](https://github.com/TommyStarK/claptrap/blob/master/example) directory
-to learn how to write your first plugin :smile:.
+to learn how to write your first plugin.
