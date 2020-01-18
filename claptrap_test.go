@@ -12,11 +12,7 @@ func init() {
 }
 
 func TestClaptrapInstanciationShouldFail(t *testing.T) {
-	var cfg = &config{
-		path: "invalid",
-	}
-
-	if _, err := newClaptrap(cfg); err == nil {
+	if _, err := newClaptrap("invalid", nil); err == nil {
 		t.Log("provided invalid path, should have failed to instanciate claptrap")
 		t.Fail()
 	}
@@ -52,11 +48,7 @@ func writeBigFile(path, content string, errchan chan error) {
 }
 
 func TestWriteBigFile(t *testing.T) {
-	var cfg = &config{
-		path: "./testdata",
-	}
-
-	c, err := newClaptrap(cfg)
+	c, err := newClaptrap("./testdata", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,11 +76,7 @@ func TestWriteBigFile(t *testing.T) {
 }
 
 func TestSendSIGTERM(t *testing.T) {
-	var cfg = &config{
-		path: "./testdata",
-	}
-
-	c, err := newClaptrap(cfg)
+	c, err := newClaptrap("./testdata", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,6 +89,34 @@ func TestSendSIGTERM(t *testing.T) {
 	}()
 
 	c.trap()
+}
+
+func TestConvertSignalToInt(t *testing.T) {
+	var (
+		sigint  = os.Signal(syscall.SIGINT)
+		sigkill = os.Signal(syscall.SIGKILL)
+		sigterm = os.Signal(syscall.SIGTERM)
+	)
+
+	if convertSignalToInt(sigint) != 2 {
+		t.Logf("return code should be equal to 2")
+		t.Fail()
+	}
+
+	if convertSignalToInt(sigkill) != 9 {
+		t.Logf("return code should be equal to 9")
+		t.Fail()
+	}
+
+	if convertSignalToInt(sigterm) != 15 {
+		t.Logf("return code should be equal to 15")
+		t.Fail()
+	}
+
+	if convertSignalToInt(nil) != 1 {
+		t.Logf("return code should be equal to 1")
+		t.Fail()
+	}
 }
 
 func TestMain(m *testing.M) {

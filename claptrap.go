@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
 	"os/signal"
@@ -9,36 +10,38 @@ import (
 )
 
 type claptrap struct {
-	config  *config
 	events  chan *event
+	handler func(string, string, string)
 	watcher *watcher
 
 	clapMustStop uint32
 	errors       chan error
 	sigchan      chan os.Signal
+	target       string
 	testMode     bool
 }
 
-func newClaptrap(cfg *config) (*claptrap, error) {
+func newClaptrap(path string, handler func(string, string, string)) (*claptrap, error) {
 	errors := make(chan error)
 	events := make(chan *event)
 	sigchan := make(chan os.Signal, 1)
 
 	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 
-	w, err := newWatcher(cfg.path, events, errors)
+	w, err := newWatcher(path, events, errors)
 	if err != nil {
 		return nil, err
 	}
 
 	var c = &claptrap{
-		config:  cfg,
 		events:  events,
+		handler: handler,
 		watcher: w,
 
 		clapMustStop: 0,
 		errors:       errors,
 		sigchan:      sigchan,
+		target:       path,
 		testMode:     false,
 	}
 
@@ -50,10 +53,37 @@ func (c *claptrap) clap(event *event) {
 		return
 	}
 
-	log.Printf("claptrap event on: %s", event.name)
-	for fsnotifyEventType, timestamp := range event.trace {
-		log.Printf("-------> Type: %s  @@@  %s", fsnotifyEventType.String(), timestamp)
+	if c.testMode {
+		return
 	}
+
+	var (
+		action    = "UPDATE"
+		timestamp = ""
+	)
+
+	for fsnotifyEventType, ts := range event.trace {
+		switch fsnotifyEventType.String() {
+		case fsnotify.Create.String():
+			action = fsnotify.Create.String()
+			timestamp = ts
+		case fsnotify.Remove.String():
+			action = fsnotify.Remove.String()
+			timestamp = ts
+		case fsnotify.Rename.String():
+			action = fsnotify.Rename.String()
+			timestamp = ts
+		}
+	}
+
+	if len(timestamp) == 0 {
+		if ts, ok := event.trace[fsnotify.Chmod]; ok && len(ts) > 0 {
+			timestamp = ts
+		}
+	}
+
+	go c.handler(action, event.name, timestamp)
+	return
 }
 
 func (c *claptrap) trap() {
@@ -77,8 +107,6 @@ func (c *claptrap) trap() {
 			close(c.errors)
 			close(c.events)
 
-			log.Println("claptrap exiting ...")
-
 			if c.testMode {
 				return
 			}
@@ -97,4 +125,24 @@ func (c *claptrap) trap() {
 			}
 		}
 	}
+}
+
+func convertSignalToInt(sig os.Signal) (rc int) {
+	rc = 1
+
+	if sig == nil {
+		return
+	}
+
+	switch sig.String() {
+	case os.Interrupt.String():
+		rc = 2
+	case os.Kill.String():
+		rc = 9
+	case "terminated":
+		rc = 15
+	default:
+	}
+
+	return
 }
