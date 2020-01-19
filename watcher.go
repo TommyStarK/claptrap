@@ -71,8 +71,9 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 	if !exist {
 		var newEvent = &event{
 			mutex: sync.Mutex{},
-			name:  fsevent.Name,
 			trace: make(map[fsnotify.Op]string),
+
+			name: fsevent.Name,
 		}
 
 		targetEvent = newEvent

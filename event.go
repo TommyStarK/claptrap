@@ -8,9 +8,9 @@ import (
 
 type event struct {
 	mutex sync.Mutex
-
-	name  string
 	trace map[fsnotify.Op]string
+
+	name string
 }
 
 func (e *event) chmod(timestamp string) {
