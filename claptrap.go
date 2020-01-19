@@ -103,7 +103,7 @@ func (c *claptrap) trap() {
 		select {
 		case sig, ok := <-c.sigchan:
 			if !ok {
-				os.Exit(1)
+				log.Fatal("unexpected error occurred on signal chan")
 				return
 			}
 
