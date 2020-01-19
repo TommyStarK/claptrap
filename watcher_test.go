@@ -3,7 +3,6 @@ package main
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/fsnotify/fsnotify"
 )
@@ -46,7 +45,7 @@ func TestInvalidWatcherInstanciation(t *testing.T) {
 	}
 }
 
-func TestWatcherShortEvent(t *testing.T) {
+func TestWatcherBehavior(t *testing.T) {
 	evch := make(chan *event)
 	errch := make(chan error)
 
@@ -55,68 +54,92 @@ func TestWatcherShortEvent(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	stopWatchErr := make(chan chan struct{})
+	go func() {
+		for {
+			select {
+			case ch := <-stopWatchErr:
+				ch <- struct{}{}
+				return
+			case err, ok := <-errch:
+				if !ok || err == nil {
+					t.Log("unexpected error occurred on error channel")
+					t.Fail()
+					continue
+				}
+
+				t.Log(err)
+				t.Fail()
+			}
+		}
+	}()
+
 	go testWatcher.watch()
 
+	triggerWrite := make(chan chan struct{})
 	go func() {
-		time.Sleep(1 * time.Second)
+		writeDone := <-triggerWrite
 		writeFile("./testdata/foo", testContent, errch)
+		writeDone <- struct{}{}
 		return
 	}()
 
+	triggerRename := make(chan chan struct{})
 	go func() {
-		time.Sleep(3 * time.Second)
+		renameDone := <-triggerRename
 		renameFile("./testdata/foo", "./testdata/bar", errch)
-		return
+		renameDone <- struct{}{}
 	}()
 
+	triggerRemove := make(chan chan struct{})
 	go func() {
-		time.Sleep(5 * time.Second)
+		removeDone := <-triggerRemove
 		removeFile("./testdata/bar", errch)
+		removeDone <- struct{}{}
 		return
 	}()
 
-	results := make([]*event, 0)
+	witness := make(chan struct{})
+	triggerWrite <- witness
+	<-witness
+	close(triggerWrite)
+	processWatcherResult(fsnotify.Create, evch, t)
 
-Loop:
-	for {
-		select {
-		case <-time.After(10 * time.Second):
-			t.Fatal("test timed out")
-		case e, ok := <-evch:
-			if !ok || e == nil {
-				t.Fatal()
-			}
+	triggerRename <- witness
+	<-witness
+	close(triggerRename)
+	processWatcherResult(fsnotify.Rename, evch, t)
 
-			results = append(results, e)
-			if len(results) == 3 {
-				break Loop
-			}
+	triggerRemove <- witness
+	<-witness
+	close(triggerRemove)
+	processWatcherResult(fsnotify.Remove, evch, t)
 
-		case err, ok := <-errch:
-			if !ok || err == nil {
-				t.Fatal()
-			}
-
-			t.Fatal(err)
-		}
-	}
-
-	if len(results) != 3 {
-		t.Fatal("expecting 3 events: new file, rename file and remove file")
-	}
-
-	if timestamp, ok := results[1].trace[fsnotify.Rename]; !ok || len(timestamp) == 0 {
-		t.Log("second event caught should be: RENAME")
-		t.Fail()
-	}
-
-	if timestamp, ok := results[2].trace[fsnotify.Remove]; !ok || len(timestamp) == 0 {
-		t.Log("last event caught should be: REMOVE")
-		t.Fail()
-	}
+	stopWatchErr <- witness
+	<-witness
+	close(stopWatchErr)
 
 	if err := testWatcher.stop(); err != nil {
 		t.Log(err)
+		t.Fail()
+	}
+
+	close(errch)
+	close(evch)
+	close(witness)
+}
+
+func processWatcherResult(op fsnotify.Op, ch chan *event, t *testing.T) {
+	event, ok := <-ch
+
+	if !ok || event == nil {
+		t.Log("unexpected error occurred on event channel")
+		t.Fail()
+		return
+	}
+
+	if timestamp, ok := event.trace[op]; !ok || len(timestamp) == 0 {
+		t.Logf("event %s should have been detected and timestamp should not be empty", op.String())
 		t.Fail()
 	}
 }

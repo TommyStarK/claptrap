@@ -34,7 +34,7 @@ func main() {
 	}
 
 	if p == nil {
-		log.Fatalf("unexpected error occurred")
+		log.Fatal("unexpected error occurred")
 		return
 	}
 
@@ -45,18 +45,18 @@ func main() {
 	}
 
 	if handle == nil {
-		log.Fatalf("unexpected error occurred")
+		log.Fatal("unexpected error occurred")
 		return
 	}
 
 	handler, ok := handle.(func(string, string, string))
 	if !ok {
-		log.Fatalf("unable to cast symbol to func(string, string, string)")
+		log.Fatal("unable to retrieve from symbol func with signature func(string, string, string)")
 		return
 	}
 
 	if handler == nil {
-		log.Fatalf("unexpected error occurred")
+		log.Fatal("unexpected error occurred")
 		return
 	}
 

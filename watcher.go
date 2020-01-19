@@ -132,20 +132,14 @@ func (w *watcher) watch() {
 			return
 
 		case e, ok := <-w.fsnWatcher.Events:
-			if !ok {
-				w.events <- nil
-				return
+			if ok {
+				go w.processEvent(e)
 			}
-
-			go w.processEvent(e)
 
 		case err, ok := <-w.fsnWatcher.Errors:
-			if !ok {
-				w.errs <- nil
-				return
+			if ok && err != nil {
+				w.errs <- err
 			}
-
-			w.errs <- err
 		}
 	}
 }

@@ -4,12 +4,7 @@ import (
 	"os"
 	"syscall"
 	"testing"
-	"time"
 )
-
-func init() {
-
-}
 
 func TestClaptrapInstanciationShouldFail(t *testing.T) {
 	if _, err := newClaptrap("invalid", nil); err == nil {
@@ -18,77 +13,75 @@ func TestClaptrapInstanciationShouldFail(t *testing.T) {
 	}
 }
 
-func writeBigFile(path, content string, errchan chan error) {
-	var f *os.File
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
-	if err != nil {
-		errchan <- err
-		return
-	}
-
-	for i := 0; i < 1000; i++ {
-		if _, err := f.WriteString(content); err != nil {
-			errchan <- err
-			return
-		}
-
-	}
-
-	if err := f.Sync(); err != nil {
-		errchan <- err
-		return
-	}
-
-	if err := f.Close(); err != nil {
-		errchan <- err
-		return
-	}
-
-	return
-}
-
-func TestWriteBigFile(t *testing.T) {
+func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	c, err := newClaptrap("./testdata", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
+	ch := make(chan [3]string)
 	c.testMode = true
+	c.testchan = ch
+
+	go c.trap()
+
+	triggerWrite := make(chan chan struct{})
 	go func() {
-		time.Sleep(1 * time.Second)
+		writeDone := <-triggerWrite
 		writeBigFile("./testdata/bigfile", testContent, c.errors)
+		writeDone <- struct{}{}
 		return
 	}()
 
+	triggerUpdate := make(chan chan struct{})
 	go func() {
-		time.Sleep(10*time.Second - 2*time.Second)
-		removeFile("./testdata/bigfile", c.errors)
+		updateDone := <-triggerUpdate
+		writeFile("./testdata/bigfile", testContent, c.errors)
+		updateDone <- struct{}{}
 		return
 	}()
 
+	triggerRename := make(chan chan struct{})
 	go func() {
-		time.Sleep(10 * time.Second)
-		c.sigchan <- os.Signal(syscall.SIGTERM)
+		renameDone := <-triggerRename
+		renameFile("./testdata/bigfile", "./testdata/bigf", c.errors)
+		renameDone <- struct{}{}
 		return
 	}()
 
-	c.trap()
-}
-
-func TestSendSIGTERM(t *testing.T) {
-	c, err := newClaptrap("./testdata", nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	c.testMode = true
+	triggerRemove := make(chan chan struct{})
 	go func() {
-		time.Sleep(1 * time.Second)
-		c.sigchan <- os.Signal(syscall.SIGTERM)
+		removeDone := <-triggerRemove
+		removeFile("./testdata/bigf", c.errors)
+		removeDone <- struct{}{}
 		return
 	}()
 
-	c.trap()
+	witness := make(chan struct{})
+	triggerWrite <- witness
+	<-witness
+	close(triggerWrite)
+	processResult("CREATE", "testdata/bigfile", ch, t)
+
+	triggerUpdate <- witness
+	<-witness
+	close(triggerUpdate)
+	processResult("UPDATE", "testdata/bigfile", ch, t)
+
+	triggerRename <- witness
+	<-witness
+	close(triggerRename)
+	processResult("RENAME", "testdata/bigfile", ch, t)
+
+	triggerRemove <- witness
+	<-witness
+	close(triggerRemove)
+	processResult("REMOVE", "testdata/bigf", ch, t)
+
+	c.sigchan <- os.Signal(syscall.SIGTERM)
+
+	close(ch)
+	close(witness)
 }
 
 func TestConvertSignalToInt(t *testing.T) {
@@ -121,4 +114,51 @@ func TestConvertSignalToInt(t *testing.T) {
 
 func TestMain(m *testing.M) {
 	os.Exit(m.Run())
+}
+
+func processResult(expectedAction, expectedTarget string, ch chan [3]string, t *testing.T) {
+	result := <-ch
+	action, target, timestamp := result[0], result[1], result[2]
+
+	if len(timestamp) == 0 {
+		t.Log("timestamp should not be empty")
+		t.Fail()
+		return
+	}
+
+	if action != expectedAction || target != expectedTarget {
+		t.Logf("event caught should be '%s' and target '%s' but got: [%s|%s] ",
+			expectedAction, expectedTarget, action, target)
+		t.Fail()
+		return
+	}
+}
+
+func writeBigFile(path, content string, errchan chan error) {
+	var f *os.File
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE, 0666)
+	if err != nil {
+		errchan <- err
+		return
+	}
+
+	for i := 0; i < 1000000; i++ {
+		if _, err := f.WriteString(content); err != nil {
+			errchan <- err
+			return
+		}
+
+	}
+
+	if err := f.Sync(); err != nil {
+		errchan <- err
+		return
+	}
+
+	if err := f.Close(); err != nil {
+		errchan <- err
+		return
+	}
+
+	return
 }

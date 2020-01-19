@@ -1,12 +1,13 @@
 package main
 
 import (
-	"github.com/fsnotify/fsnotify"
 	"log"
 	"os"
 	"os/signal"
 	"sync/atomic"
 	"syscall"
+
+	"github.com/fsnotify/fsnotify"
 )
 
 type claptrap struct {
@@ -18,7 +19,10 @@ type claptrap struct {
 	errors       chan error
 	sigchan      chan os.Signal
 	target       string
-	testMode     bool
+
+	// for sake of tests
+	testchan chan [3]string
+	testMode bool
 }
 
 func newClaptrap(path string, handler func(string, string, string)) (*claptrap, error) {
@@ -42,7 +46,9 @@ func newClaptrap(path string, handler func(string, string, string)) (*claptrap, 
 		errors:       errors,
 		sigchan:      sigchan,
 		target:       path,
-		testMode:     false,
+		// for sake of tests
+		testchan: nil,
+		testMode: false,
 	}
 
 	return c, nil
@@ -50,10 +56,6 @@ func newClaptrap(path string, handler func(string, string, string)) (*claptrap, 
 
 func (c *claptrap) clap(event *event) {
 	if atomic.LoadUint32(&c.clapMustStop) == 1 {
-		return
-	}
-
-	if c.testMode {
 		return
 	}
 
@@ -80,6 +82,18 @@ func (c *claptrap) clap(event *event) {
 		if ts, ok := event.trace[fsnotify.Chmod]; ok && len(ts) > 0 {
 			timestamp = ts
 		}
+	}
+
+	// for sake of tests
+	if c.testMode {
+		if c.testchan != nil {
+			var res [3]string
+			res[0] = action
+			res[1] = event.name
+			res[2] = timestamp
+			c.testchan <- res
+		}
+		return
 	}
 
 	go c.handler(action, event.name, timestamp)
