@@ -13,7 +13,7 @@ func main() {
 		pluginPath string
 	)
 
-	flag.StringVar(&path, "path", "", "specify the path to the file/directory to watch")
+	flag.StringVar(&path, "path", "", "specify the path to the file/directory to monitor")
 	flag.StringVar(&pluginPath, "plugin", "", "path to the plugin to load (.so)")
 	flag.Parse()
 
