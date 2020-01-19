@@ -29,7 +29,7 @@ func main() {
 
 	p, err := plugin.Open(pluginPath)
 	if err != nil {
-		log.Fatalf("failed to open plugin: %s", err.Error())
+		log.Fatalf("failed to open plugin (%s): %s", pluginPath, err.Error())
 		return
 	}
 
