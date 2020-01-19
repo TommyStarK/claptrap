@@ -147,7 +147,6 @@ func writeBigFile(path, content string, errchan chan error) {
 			errchan <- err
 			return
 		}
-
 	}
 
 	if err := f.Sync(); err != nil {

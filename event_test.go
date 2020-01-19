@@ -18,7 +18,7 @@ func TestEventIsReadyForBeingProcessed(t *testing.T) {
 	event1.write("fake-timestamp-2")
 
 	if event1.isReadyForBeingProcessed() {
-		t.Log("event1 should not be ready for being processed, missing 'chmod' event meaning the file is still being edited")
+		t.Log("event1 should not be ready for being processed, missing 'CHMOD' event, meaning the file is still being edited")
 		t.Fail()
 	}
 
