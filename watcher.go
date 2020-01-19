@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"log"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -40,12 +39,7 @@ func newWatcher(path string, events chan *event, errs chan error) (*watcher, err
 	}
 
 	if err := fsnWatcher.Add(path); err != nil {
-		defer func() {
-			if err := fsnWatcher.Close(); err != nil {
-				log.Printf("failed to close fsnotify watcher: %s", err.Error())
-			}
-		}()
-
+		defer fsnWatcher.Close()
 		return nil, err
 	}
 
@@ -74,11 +68,7 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 	targetEvent, exist = w.trace[fsevent.Name]
 	w.rwmutex.RUnlock()
 
-	if atomic.LoadUint32(&w.processingMustStop) == 1 {
-		return
-	}
-
-	if !exist {
+	if !exist && atomic.LoadUint32(&w.processingMustStop) == 0 {
 		var newEvent = &event{
 			mutex: sync.Mutex{},
 			name:  fsevent.Name,

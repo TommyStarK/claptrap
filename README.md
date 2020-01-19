@@ -17,7 +17,7 @@ First, let's build the `shared object` based on the example plugin. This is a du
 acting as a simple log function that prints on the standard output:
 
     - the type of event which can be either CREATE|UPDATE|RENAME|REMOVE
-    - the target file responsible of the event
+    - the target file attached to the event
     - the timestamp of when the event has been detected
 
 ```bash

@@ -55,10 +55,6 @@ func newClaptrap(path string, handler func(string, string, string)) (*claptrap, 
 }
 
 func (c *claptrap) clap(event *event) {
-	if atomic.LoadUint32(&c.clapMustStop) == 1 {
-		return
-	}
-
 	var (
 		action    = "UPDATE"
 		timestamp = ""
@@ -84,19 +80,16 @@ func (c *claptrap) clap(event *event) {
 		}
 	}
 
-	// for sake of tests
-	if c.testMode {
-		if c.testchan != nil {
-			var res [3]string
-			res[0] = action
-			res[1] = event.name
-			res[2] = timestamp
-			c.testchan <- res
-		}
+	if !c.testMode && atomic.LoadUint32(&c.clapMustStop) == 0 {
+		go c.handler(action, event.name, timestamp)
 		return
 	}
 
-	go c.handler(action, event.name, timestamp)
+	// for sake of tests
+	if c.testchan != nil && atomic.LoadUint32(&c.clapMustStop) == 0 {
+		c.testchan <- [3]string{action, event.name, timestamp}
+	}
+
 	return
 }
 
@@ -135,7 +128,7 @@ func (c *claptrap) trap() {
 
 		case err, ok := <-c.errors:
 			if ok && err != nil {
-				log.Println("error: ", err)
+				log.Printf("error: %s", err.Error())
 			}
 		}
 	}

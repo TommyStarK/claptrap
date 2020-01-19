@@ -55,11 +55,6 @@ func main() {
 		return
 	}
 
-	if handler == nil {
-		log.Fatal("unexpected error occurred")
-		return
-	}
-
 	app, err := newClaptrap(path, handler)
 	if err != nil {
 		log.Fatal(err)
