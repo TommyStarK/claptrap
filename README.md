@@ -1,7 +1,7 @@
 # claptrap
 
 Monitor file/folder, and trigger whatever action you wish. HTTP notification, file backup
-or anything that cross your mind. With the go plugin you can implement your own magic !
+or anything that cross your mind. With Go plugins you can implement your own magic !
 
 > Built easily thanks to [fsnotify](https://github.com/fsnotify/fsnotify) :sunglasses:.
 
