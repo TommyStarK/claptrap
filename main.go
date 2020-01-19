@@ -51,7 +51,7 @@ func main() {
 
 	handler, ok := handle.(func(string, string, string))
 	if !ok {
-		log.Fatal("unable to retrieve from symbol func with signature func(string, string, string)")
+		log.Fatal("unable to retrieve from symbol 'Handle', a function with the following signature: func(string, string, string)")
 		return
 	}
 
