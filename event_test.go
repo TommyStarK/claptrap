@@ -10,8 +10,9 @@ import (
 func TestEventIsReadyForBeingProcessed(t *testing.T) {
 	var event1 = &event{
 		mutex: sync.Mutex{},
-		name:  "dummy",
 		trace: make(map[fsnotify.Op]string),
+
+		name: "dummy",
 	}
 
 	event1.create("fake-timestamp-1")
@@ -30,8 +31,9 @@ func TestEventIsReadyForBeingProcessed(t *testing.T) {
 
 	var event2 = &event{
 		mutex: sync.Mutex{},
-		name:  "dummy2",
 		trace: make(map[fsnotify.Op]string),
+
+		name: "dummy2",
 	}
 
 	event2.remove("fake-timestamp-1")
@@ -42,8 +44,9 @@ func TestEventIsReadyForBeingProcessed(t *testing.T) {
 
 	var event3 = &event{
 		mutex: sync.Mutex{},
-		name:  "dummy3",
 		trace: make(map[fsnotify.Op]string),
+
+		name: "dummy3",
 	}
 
 	event3.rename("fake-timestamp-1")
