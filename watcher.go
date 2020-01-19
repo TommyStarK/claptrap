@@ -68,7 +68,7 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 	targetEvent, exist = w.trace[fsevent.Name]
 	w.rwmutex.RUnlock()
 
-	if !exist && atomic.LoadUint32(&w.processingMustStop) == 0 {
+	if !exist {
 		var newEvent = &event{
 			mutex: sync.Mutex{},
 			name:  fsevent.Name,

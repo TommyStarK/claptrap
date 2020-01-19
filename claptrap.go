@@ -62,21 +62,24 @@ func (c *claptrap) clap(event *event) {
 
 	for fsnotifyEventType, ts := range event.trace {
 		switch fsnotifyEventType.String() {
-		case fsnotify.Create.String():
-			action = fsnotify.Create.String()
-			timestamp = ts
 		case fsnotify.Remove.String():
 			action = fsnotify.Remove.String()
 			timestamp = ts
+			break
 		case fsnotify.Rename.String():
 			action = fsnotify.Rename.String()
 			timestamp = ts
+			break
 		}
 	}
 
 	if len(timestamp) == 0 {
 		if ts, ok := event.trace[fsnotify.Chmod]; ok && len(ts) > 0 {
 			timestamp = ts
+		}
+
+		if ts, ok := event.trace[fsnotify.Create]; ok && len(ts) > 0 {
+			action = fsnotify.Create.String()
 		}
 	}
 
