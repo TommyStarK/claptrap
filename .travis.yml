@@ -1,8 +1,7 @@
 language: go
 
 env:
-    - GO111MODULE=on
-    - CI=on
+    - GO111MODULE=on CI=on
 
 go:
     - 1.13
