@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"runtime"
 	"syscall"
 	"testing"
 )
@@ -142,7 +143,7 @@ func writeBigFile(path, content string, errchan chan error) {
 		return
 	}
 
-	for i := 0; i < 1000000; i++ {
+	for i := 0; i < runtime.NumCPU()*1000; i++ {
 		if _, err := f.WriteString(content); err != nil {
 			errchan <- err
 			return

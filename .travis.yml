@@ -9,7 +9,7 @@ go:
     - 1.13
 
 script:
-    - go test -v -race -failfast --cover -covermode=atomic -mod=vendor -coverprofile=coverage.out
+    - go test -v -race -failfast --cover -covermode=atomic -mod=vendor -coverprofile=coverage.txt
 
 after_success:
     - bash <(curl -s https://codecov.io/bash)
