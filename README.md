@@ -1,5 +1,7 @@
 # claptrap
 
+[![Build Status](https://travis-ci.org/TommyStarK/claptrap.svg?branch=master)](https://travis-ci.org/TommyStarK/claptrap)
+
 Monitor a file/directory, and trigger whatever action you wish. HTTP notification, file backup
 or anything that cross your mind. With Go plugins you can implement your own magic !
 
