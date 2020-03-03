@@ -7,6 +7,22 @@ import (
 	"testing"
 )
 
+var (
+	onCI         = len(os.Getenv("CI")) > 0
+	gopath       = os.Getenv("GOPATH")
+	testDataPath = "./testdata"
+)
+
+func init() {
+	if len(gopath) == 0 {
+		panic("$GOPATH not set")
+	}
+
+	if onCI {
+		testDataPath = os.Getenv("GOPATH") + "/src/github.com/TommyStarK/claptrap/testdata"
+	}
+}
+
 func TestClaptrapInstanciationShouldFail(t *testing.T) {
 	if _, err := newClaptrap("invalid", nil); err == nil {
 		t.Log("provided invalid path, should have failed to instanciate claptrap")
@@ -15,7 +31,7 @@ func TestClaptrapInstanciationShouldFail(t *testing.T) {
 }
 
 func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
-	c, err := newClaptrap("./testdata", nil)
+	c, err := newClaptrap(testDataPath, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -29,7 +45,7 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	triggerWrite := make(chan chan struct{})
 	go func() {
 		writeDone := <-triggerWrite
-		writeBigFile("./testdata/bigfile", testContent, c.errors)
+		writeBigFile(testDataPath+"/bigfile", testContent, c.errors)
 		writeDone <- struct{}{}
 		return
 	}()
@@ -37,7 +53,7 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	triggerUpdate := make(chan chan struct{})
 	go func() {
 		updateDone := <-triggerUpdate
-		writeFile("./testdata/bigfile", testContent, c.errors)
+		writeFile(testDataPath+"/bigfile", testContent, c.errors)
 		updateDone <- struct{}{}
 		return
 	}()
@@ -45,7 +61,7 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	triggerRename := make(chan chan struct{})
 	go func() {
 		renameDone := <-triggerRename
-		renameFile("./testdata/bigfile", "./testdata/bigf", c.errors)
+		renameFile(testDataPath+"/bigfile", testDataPath+"/bigf", c.errors)
 		renameDone <- struct{}{}
 		return
 	}()
@@ -53,7 +69,7 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	triggerRemove := make(chan chan struct{})
 	go func() {
 		removeDone := <-triggerRemove
-		removeFile("./testdata/bigf", c.errors)
+		removeFile(testDataPath+"/bigf", c.errors)
 		removeDone <- struct{}{}
 		return
 	}()

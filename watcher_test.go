@@ -49,7 +49,7 @@ func TestWatcherBehavior(t *testing.T) {
 	evch := make(chan *event)
 	errch := make(chan error)
 
-	testWatcher, err := newWatcher("./testdata", evch, errch)
+	testWatcher, err := newWatcher(testDataPath, evch, errch)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func TestWatcherBehavior(t *testing.T) {
 	triggerWrite := make(chan chan struct{})
 	go func() {
 		writeDone := <-triggerWrite
-		writeFile("./testdata/foo", testContent, errch)
+		writeFile(testDataPath+"/foo", testContent, errch)
 		writeDone <- struct{}{}
 		return
 	}()
@@ -87,14 +87,14 @@ func TestWatcherBehavior(t *testing.T) {
 	triggerRename := make(chan chan struct{})
 	go func() {
 		renameDone := <-triggerRename
-		renameFile("./testdata/foo", "./testdata/bar", errch)
+		renameFile(testDataPath+"/foo", testDataPath+"/bar", errch)
 		renameDone <- struct{}{}
 	}()
 
 	triggerRemove := make(chan chan struct{})
 	go func() {
 		removeDone := <-triggerRemove
-		removeFile("./testdata/bar", errch)
+		removeFile(testDataPath+"/bar", errch)
 		removeDone <- struct{}{}
 		return
 	}()
