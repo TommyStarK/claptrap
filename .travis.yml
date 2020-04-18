@@ -1,4 +1,4 @@
-sudo: required
+os: osx
 
 language: go
 
@@ -7,11 +7,6 @@ env:
 
 go:
     - 1.13
-
-before_install:
-  # install inotifywait
-  - sudo apt-get update
-  - sudo apt-get install -o Dpkg::Options::="--force-confold" --force-yes -y inotify-tools
 
 script:
     - go test -v -race -failfast --cover -covermode=atomic -mod=vendor -coverprofile=coverage.txt
