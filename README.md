@@ -1,6 +1,6 @@
 # claptrap
 
-[![Build Status](https://travis-ci.org/TommyStarK/claptrap.svg?branch=master)](https://travis-ci.org/TommyStarK/claptrap)
+[![Build Status](https://travis-ci.org/TommyStarK/claptrap.svg?branch=master)](https://travis-ci.org/TommyStarK/claptrap) [![Go Report Card](https://goreportcard.com/badge/github.com/TommyStarK/claptrap)](https://goreportcard.com/report/github.com/TommyStarK/claptrap)
 
 Monitor a file/directory, and trigger whatever action you wish. HTTP notification, file backup
 or anything that cross your mind. With Go plugins you can implement your own magic !
