@@ -68,10 +68,5 @@ func (e *event) isReadyForBeingProcessed() bool {
 		}
 	}
 	e.mutex.Unlock()
-
-	if witness&fsnotify.Write != 0 && witness&fsnotify.Chmod != 0 {
-		return true
-	}
-
-	return false
+	return witness&fsnotify.Write != 0 && witness&fsnotify.Chmod != 0
 }
