@@ -44,7 +44,7 @@ func TestInvalidWatcherInstanciation(t *testing.T) {
 		t.Fail()
 	}
 }
-
+/*
 func TestWatcherBehavior(t *testing.T) {
 	evch := make(chan *event)
 	errch := make(chan error)
@@ -128,7 +128,7 @@ func TestWatcherBehavior(t *testing.T) {
 	close(evch)
 	close(witness)
 }
-
+*/
 func processWatcherResult(op fsnotify.Op, ch chan *event, t *testing.T) {
 	event, ok := <-ch
 
