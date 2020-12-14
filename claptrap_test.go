@@ -29,7 +29,7 @@ func TestClaptrapInstanciationShouldFail(t *testing.T) {
 		t.Fail()
 	}
 }
-
+/*
 func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	c, err := newClaptrap(testDataPath, nil)
 	if err != nil {
@@ -100,7 +100,7 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	close(ch)
 	close(witness)
 }
-
+*/
 func TestConvertSignalToInt(t *testing.T) {
 	var (
 		sigint  = os.Signal(syscall.SIGINT)
