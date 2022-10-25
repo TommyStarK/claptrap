@@ -6,7 +6,7 @@ env:
     - GO111MODULE=on CI=on
 
 go:
-    - 1.15
+    - 1.19
 
 script:
     - go test -v -race -failfast --cover -covermode=atomic -mod=vendor -coverprofile=coverage.txt

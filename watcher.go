@@ -10,14 +10,15 @@ import (
 )
 
 type watcher struct {
-	events     chan *event
 	fsnWatcher *fsnotify.Watcher
-	trace      map[string]*event
 
-	errs               chan error
+	errs         chan error
+	events       chan *event
+	rwmutex      sync.RWMutex
+	stopWatching chan chan struct{}
+	trace        map[string]*event
+
 	processingMustStop uint32
-	rwmutex            sync.RWMutex
-	stopWatching       chan chan struct{}
 }
 
 func newWatcher(path string, events chan *event, errs chan error) (*watcher, error) {
@@ -44,14 +45,15 @@ func newWatcher(path string, events chan *event, errs chan error) (*watcher, err
 	}
 
 	var w = &watcher{
-		events:     events,
 		fsnWatcher: fsnWatcher,
-		trace:      make(map[string]*event),
 
-		errs:               errs,
-		rwmutex:            sync.RWMutex{},
+		errs:         errs,
+		events:       events,
+		rwmutex:      sync.RWMutex{},
+		stopWatching: make(chan chan struct{}),
+		trace:        make(map[string]*event),
+
 		processingMustStop: 0,
-		stopWatching:       make(chan chan struct{}),
 	}
 
 	return w, nil
@@ -121,12 +123,10 @@ func (w *watcher) watch() {
 		case ch := <-w.stopWatching:
 			ch <- struct{}{}
 			return
-
 		case e, ok := <-w.fsnWatcher.Events:
 			if ok {
 				go w.processEvent(e)
 			}
-
 		case err, ok := <-w.fsnWatcher.Errors:
 			if ok && err != nil {
 				w.errs <- err

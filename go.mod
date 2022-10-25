@@ -1,8 +1,7 @@
 module github.com/TommyStarK/claptrap
 
-go 1.13
+go 1.19
 
-require (
-	github.com/fsnotify/fsnotify v1.4.7
-	golang.org/x/sys v0.0.0-20200116001909-b77594299b42 // indirect
-)
+require github.com/fsnotify/fsnotify v1.6.0
+
+require golang.org/x/sys v0.0.0-20220908164124-27713097b956 // indirect

@@ -44,7 +44,7 @@ func TestInvalidWatcherInstanciation(t *testing.T) {
 		t.Fail()
 	}
 }
-/*
+
 func TestWatcherBehavior(t *testing.T) {
 	evch := make(chan *event)
 	errch := make(chan error)
@@ -67,7 +67,6 @@ func TestWatcherBehavior(t *testing.T) {
 					t.Fail()
 					continue
 				}
-
 				t.Log(err)
 				t.Fail()
 			}
@@ -128,7 +127,7 @@ func TestWatcherBehavior(t *testing.T) {
 	close(evch)
 	close(witness)
 }
-*/
+
 func processWatcherResult(op fsnotify.Op, ch chan *event, t *testing.T) {
 	event, ok := <-ch
 
@@ -137,7 +136,6 @@ func processWatcherResult(op fsnotify.Op, ch chan *event, t *testing.T) {
 		t.Fail()
 		return
 	}
-
 	if timestamp, ok := event.trace[op]; !ok || len(timestamp) == 0 {
 		t.Logf("event %s should have been detected and timestamp should not be empty", op.String())
 		t.Fail()
@@ -156,22 +154,18 @@ func writeFile(path, content string, errchan chan error) {
 		errchan <- err
 		return
 	}
-
 	if _, err := f.WriteString(content); err != nil {
 		errchan <- err
 		return
 	}
-
 	if err := f.Sync(); err != nil {
 		errchan <- err
 		return
 	}
-
 	if err := f.Close(); err != nil {
 		errchan <- err
 		return
 	}
-
 	return
 }
 
@@ -180,7 +174,6 @@ func renameFile(oldpath, newpath string, errchan chan error) {
 		errchan <- err
 		return
 	}
-
 	return
 }
 
@@ -189,6 +182,5 @@ func removeFile(path string, errchan chan error) {
 		errchan <- err
 		return
 	}
-
 	return
 }

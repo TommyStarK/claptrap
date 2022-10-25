@@ -8,7 +8,7 @@ into the shared object specified in the command arguments. It will also ensure t
 function matches the following signature:
 
 ```go
-func Handle(action string, target string, timestamp string) {
+func Handle(action, target, timestamp string) {
     // Add your magic :)
 }
 ```

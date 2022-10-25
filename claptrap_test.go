@@ -17,7 +17,6 @@ func init() {
 	if len(gopath) == 0 {
 		panic("$GOPATH not set")
 	}
-
 	if onCI {
 		testDataPath = os.Getenv("GOPATH") + "/src/github.com/TommyStarK/claptrap/testdata"
 	}
@@ -29,7 +28,7 @@ func TestClaptrapInstanciationShouldFail(t *testing.T) {
 		t.Fail()
 	}
 }
-/*
+
 func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	c, err := newClaptrap(testDataPath, nil)
 	if err != nil {
@@ -100,7 +99,7 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	close(ch)
 	close(witness)
 }
-*/
+
 func TestConvertSignalToInt(t *testing.T) {
 	var (
 		sigint  = os.Signal(syscall.SIGINT)
@@ -112,17 +111,14 @@ func TestConvertSignalToInt(t *testing.T) {
 		t.Logf("return code should be equal to 2")
 		t.Fail()
 	}
-
 	if convertSignalToInt(sigkill) != 9 {
 		t.Logf("return code should be equal to 9")
 		t.Fail()
 	}
-
 	if convertSignalToInt(sigterm) != 15 {
 		t.Logf("return code should be equal to 15")
 		t.Fail()
 	}
-
 	if convertSignalToInt(nil) != 1 {
 		t.Logf("return code should be equal to 1")
 		t.Fail()
@@ -142,10 +138,8 @@ func processResult(expectedAction, expectedTarget string, ch chan [3]string, t *
 		t.Fail()
 		return
 	}
-
 	if action != expectedAction || target != expectedTarget {
-		t.Logf("event caught should be '%s' and target '%s' but got: [%s|%s] ",
-			expectedAction, expectedTarget, action, target)
+		t.Logf("event caught should be '%s' and target '%s' but got: [%s|%s] ", expectedAction, expectedTarget, action, target)
 		t.Fail()
 		return
 	}
@@ -170,7 +164,6 @@ func writeBigFile(path, content string, errchan chan error) {
 		errchan <- err
 		return
 	}
-
 	if err := f.Close(); err != nil {
 		errchan <- err
 		return
