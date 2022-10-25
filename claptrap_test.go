@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"syscall"
@@ -22,10 +21,6 @@ func init() {
 	if !onCI {
 		testDataPath = "./testdata"
 	}
-
-	fmt.Println(onCI)
-	fmt.Println(gopath)
-	fmt.Println(testDataPath)
 }
 
 func TestClaptrapInstanciationShouldFail(t *testing.T) {
@@ -83,22 +78,22 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	triggerWrite <- witness
 	<-witness
 	close(triggerWrite)
-	processResult("CREATE", "testdata/bigfile", ch, t)
+	processResult("CREATE", testDataPath+"/bigfile", ch, t)
 
 	triggerUpdate <- witness
 	<-witness
 	close(triggerUpdate)
-	processResult("UPDATE", "testdata/bigfile", ch, t)
+	processResult("UPDATE", testDataPath+"/bigfile", ch, t)
 
 	triggerRename <- witness
 	<-witness
 	close(triggerRename)
-	processResult("RENAME", "testdata/bigfile", ch, t)
+	processResult("RENAME", testDataPath+"/bigfile", ch, t)
 
 	triggerRemove <- witness
 	<-witness
 	close(triggerRemove)
-	processResult("REMOVE", "testdata/bigf", ch, t)
+	processResult("REMOVE", testDataPath+"/bigf", ch, t)
 
 	c.sigchan <- os.Signal(syscall.SIGTERM)
 
