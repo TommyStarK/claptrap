@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"runtime"
 	"syscall"
@@ -17,6 +18,10 @@ func init() {
 	if len(gopath) == 0 {
 		panic("$GOPATH not set")
 	}
+
+	fmt.Println(gopath)
+	fmt.Println(onCI)
+	fmt.Println(testDataPath)
 	if onCI {
 		testDataPath = os.Getenv("GOPATH") + "/src/github.com/TommyStarK/claptrap/testdata"
 	}
