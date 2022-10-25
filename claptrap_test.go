@@ -19,7 +19,7 @@ func init() {
 	}
 
 	if !onCI {
-		testDataPath = "./testdata"
+		testDataPath = "testdata"
 	}
 }
 
