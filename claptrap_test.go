@@ -11,7 +11,7 @@ import (
 var (
 	onCI         = len(os.Getenv("CI")) > 0
 	gopath       = os.Getenv("GOPATH")
-	testDataPath = "./testdata"
+	testDataPath = gopath + "/src/github.com/TommyStarK/claptrap/testdata"
 )
 
 func init() {
@@ -19,12 +19,13 @@ func init() {
 		panic("$GOPATH not set")
 	}
 
-	fmt.Println(gopath)
-	fmt.Println(onCI)
-	fmt.Println(testDataPath)
-	if onCI {
-		testDataPath = os.Getenv("GOPATH") + "/src/github.com/TommyStarK/claptrap/testdata"
+	if !onCI {
+		testDataPath = "./testdata"
 	}
+
+	fmt.Println(onCI)
+	fmt.Println(gopath)
+	fmt.Println(testDataPath)
 }
 
 func TestClaptrapInstanciationShouldFail(t *testing.T) {
