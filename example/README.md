@@ -8,7 +8,7 @@ into the shared object specified in the command arguments. It will also ensure t
 function matches the following signature:
 
 ```go
-func Handle(action string, target string, timestamp string) {
+func Handle(action, target, timestamp string) {
     // Add your magic :)
 }
 ```
@@ -19,5 +19,5 @@ func Handle(action string, target string, timestamp string) {
 To build your plugin, just run the following command:
 
 ```bash
-$ go build -buildmode=plugin -o NAME_OF_YOUR_PLUGIN
+❯ go build -buildmode=plugin -o NAME_OF_YOUR_PLUGIN
 ```

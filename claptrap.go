@@ -11,13 +11,14 @@ import (
 )
 
 type claptrap struct {
-	events  chan *event
-	handler func(string, string, string)
 	watcher *watcher
 
+	errors  chan error
+	events  chan *event
+	handler func(string, string, string)
+	sigchan chan os.Signal
+
 	clapMustStop uint32
-	errors       chan error
-	sigchan      chan os.Signal
 	target       string
 
 	// for sake of tests
@@ -38,14 +39,16 @@ func newClaptrap(path string, handler func(string, string, string)) (*claptrap, 
 	}
 
 	var c = &claptrap{
-		events:  events,
-		handler: handler,
 		watcher: w,
 
+		errors:  errors,
+		events:  events,
+		handler: handler,
+		sigchan: sigchan,
+
 		clapMustStop: 0,
-		errors:       errors,
-		sigchan:      sigchan,
 		target:       path,
+
 		// for sake of tests
 		testchan: nil,
 		testMode: false,
@@ -77,7 +80,6 @@ func (c *claptrap) clap(event *event) {
 		if ts, ok := event.trace[fsnotify.Chmod]; ok && len(ts) > 0 {
 			timestamp = ts
 		}
-
 		if ts, ok := event.trace[fsnotify.Create]; ok && len(ts) > 0 {
 			action = fsnotify.Create.String()
 		}
@@ -123,12 +125,10 @@ func (c *claptrap) trap() {
 
 			os.Exit(convertSignalToInt(sig))
 			return
-
 		case event, ok := <-c.events:
 			if ok && event != nil {
 				go c.clap(event)
 			}
-
 		case err, ok := <-c.errors:
 			if ok && err != nil {
 				log.Printf("error: %s", err.Error())
