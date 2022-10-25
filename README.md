@@ -10,7 +10,7 @@ or anything that cross your mind. With Go plugins you can implement your own mag
 - Download
 
 ```bash
-$ go get github.com/TommyStarK/claptrap
+❯ go get github.com/TommyStarK/claptrap
 ```
 
 - Demo
@@ -23,22 +23,22 @@ acting as a simple log function that prints on the standard output:
     - the timestamp of when the event has been detected
 
 ```bash
-$ cd example/
-$ go build -buildmode=plugin -o demo
-$ cd ../
+❯ cd example/
+❯ go build -buildmode=plugin -o demo
+❯ cd ../
 ```
 
 Our plugin is ready, we can now build `claptrap` and run it:
 
 ```bash
 # build claptrap
-$ go build -mod=vendor -o claptrap
+❯ go build -mod=vendor -o claptrap
 
 # see help
-$ ./claptrap --help
+❯ ./claptrap --help
 
 # for demo purposes we run claptrap in its own directory
-$ ./claptrap -path=. -plugin=example/demo
+❯ ./claptrap -path=. -plugin=example/demo
 ```
 
 It's ready !! To test it you can edit the README and remove this line :sunglasses:.

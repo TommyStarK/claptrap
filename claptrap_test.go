@@ -169,6 +169,5 @@ func writeBigFile(path, content string, errchan chan error) {
 		errchan <- err
 		return
 	}
-
 	return
 }

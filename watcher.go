@@ -25,11 +25,9 @@ func newWatcher(path string, events chan *event, errs chan error) (*watcher, err
 	if len(path) == 0 {
 		return nil, errors.New("watcher: invalid path, received empty string")
 	}
-
 	if events == nil {
 		return nil, errors.New("watcher: invalid events channel, received nil")
 	}
-
 	if errs == nil {
 		return nil, errors.New("watcher: invalid errors channel, received nil")
 	}

@@ -19,5 +19,5 @@ func Handle(action, target, timestamp string) {
 To build your plugin, just run the following command:
 
 ```bash
-$ go build -buildmode=plugin -o NAME_OF_YOUR_PLUGIN
+❯ go build -buildmode=plugin -o NAME_OF_YOUR_PLUGIN
 ```
