@@ -38,7 +38,6 @@ func newWatcher(path string, events chan *event, errs chan error) (*watcher, err
 	}
 
 	if err := fsnWatcher.Add(path); err != nil {
-		defer fsnWatcher.Close()
 		return nil, err
 	}
 
@@ -101,8 +100,6 @@ func (w *watcher) processEvent(fsevent fsnotify.Event) {
 		delete(w.trace, targetEvent.name)
 		w.rwmutex.Unlock()
 	}
-
-	return
 }
 
 func (w *watcher) stop() error {
@@ -110,8 +107,8 @@ func (w *watcher) stop() error {
 	ch := make(chan struct{})
 	w.stopWatching <- ch
 	<-ch
-	close(ch)
-	close(w.stopWatching)
+	defer close(ch)
+	defer close(w.stopWatching)
 	return w.fsnWatcher.Close()
 }
 

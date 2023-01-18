@@ -25,8 +25,7 @@ func init() {
 
 func TestClaptrapInstanciationShouldFail(t *testing.T) {
 	if _, err := newClaptrap("invalid", nil); err == nil {
-		t.Log("provided invalid path, should have failed to instanciate claptrap")
-		t.Fail()
+		t.Fatal("provided invalid path, should have failed to instanciate claptrap")
 	}
 }
 
@@ -40,60 +39,57 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 	c.testMode = true
 	c.testchan = ch
 
+	triggerWrite := make(chan chan struct{}, 1)
+	triggerUpdate := make(chan chan struct{}, 1)
+	triggerRename := make(chan chan struct{}, 1)
+	triggerRemove := make(chan chan struct{}, 1)
+	witness := make(chan struct{}, 1)
+
 	go c.trap()
 
-	triggerWrite := make(chan chan struct{})
-	go func() {
+	go func(triggerWrite chan chan struct{}) {
 		writeDone := <-triggerWrite
 		writeBigFile(testDataPath+"/bigfile", testContent, c.errors)
 		writeDone <- struct{}{}
-		return
-	}()
+	}(triggerWrite)
 
-	triggerUpdate := make(chan chan struct{})
-	go func() {
+	go func(triggerUpdate chan chan struct{}) {
 		updateDone := <-triggerUpdate
 		writeFile(testDataPath+"/bigfile", testContent, c.errors)
 		updateDone <- struct{}{}
-		return
-	}()
+	}(triggerUpdate)
 
-	triggerRename := make(chan chan struct{})
-	go func() {
+	go func(triggerRename chan chan struct{}) {
 		renameDone := <-triggerRename
 		renameFile(testDataPath+"/bigfile", testDataPath+"/bigf", c.errors)
 		renameDone <- struct{}{}
-		return
-	}()
+	}(triggerRename)
 
-	triggerRemove := make(chan chan struct{})
-	go func() {
+	go func(triggerRemove chan chan struct{}) {
 		removeDone := <-triggerRemove
 		removeFile(testDataPath+"/bigf", c.errors)
 		removeDone <- struct{}{}
-		return
-	}()
+	}(triggerRemove)
 
-	witness := make(chan struct{})
 	triggerWrite <- witness
 	<-witness
 	close(triggerWrite)
-	processResult("CREATE", testDataPath+"/bigfile", ch, t)
+	processResult(t, "CREATE", testDataPath+"/bigfile", ch)
 
 	triggerUpdate <- witness
 	<-witness
 	close(triggerUpdate)
-	processResult("UPDATE", testDataPath+"/bigfile", ch, t)
+	processResult(t, "UPDATE", testDataPath+"/bigfile", ch)
 
 	triggerRename <- witness
 	<-witness
 	close(triggerRename)
-	processResult("RENAME", testDataPath+"/bigfile", ch, t)
+	processResult(t, "RENAME", testDataPath+"/bigfile", ch)
 
 	triggerRemove <- witness
 	<-witness
 	close(triggerRemove)
-	processResult("REMOVE", testDataPath+"/bigf", ch, t)
+	processResult(t, "REMOVE", testDataPath+"/bigf", ch)
 
 	c.sigchan <- os.Signal(syscall.SIGTERM)
 
@@ -102,27 +98,42 @@ func TestClaptrapBehaviorOnLargeFile(t *testing.T) {
 }
 
 func TestConvertSignalToInt(t *testing.T) {
-	var (
-		sigint  = os.Signal(syscall.SIGINT)
-		sigkill = os.Signal(syscall.SIGKILL)
-		sigterm = os.Signal(syscall.SIGTERM)
-	)
-
-	if convertSignalToInt(sigint) != 2 {
-		t.Logf("return code should be equal to 2")
-		t.Fail()
-	}
-	if convertSignalToInt(sigkill) != 9 {
-		t.Logf("return code should be equal to 9")
-		t.Fail()
-	}
-	if convertSignalToInt(sigterm) != 15 {
-		t.Logf("return code should be equal to 15")
-		t.Fail()
-	}
-	if convertSignalToInt(nil) != 1 {
-		t.Logf("return code should be equal to 1")
-		t.Fail()
+	for _, test := range []struct {
+		name     string
+		signal   os.Signal
+		expected int
+	}{
+		{
+			name:     "nil",
+			signal:   nil,
+			expected: 1,
+		},
+		{
+			name:     "not supported",
+			signal:   syscall.SIGABRT,
+			expected: 1,
+		},
+		{
+			name:     "sigint",
+			signal:   syscall.SIGINT,
+			expected: 2,
+		},
+		{
+			name:     "sigkill",
+			signal:   syscall.SIGKILL,
+			expected: 9,
+		},
+		{
+			name:     "sigterm",
+			signal:   syscall.SIGTERM,
+			expected: 15,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			if c := convertSignalToInt(test.signal); c != test.expected {
+				t.Errorf("expected: %d, but got: %d", test.expected, c)
+			}
+		})
 	}
 }
 
@@ -130,19 +141,15 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-func processResult(expectedAction, expectedTarget string, ch chan [3]string, t *testing.T) {
+func processResult(t *testing.T, expectedAction, expectedTarget string, ch chan [3]string) {
 	result := <-ch
 	action, target, timestamp := result[0], result[1], result[2]
 
 	if len(timestamp) == 0 {
-		t.Log("timestamp should not be empty")
-		t.Fail()
-		return
+		t.Fatal("timestamp should not be empty")
 	}
 	if action != expectedAction || target != expectedTarget {
-		t.Logf("event caught should be '%s' and target '%s' but got: [%s|%s] ", expectedAction, expectedTarget, action, target)
-		t.Fail()
-		return
+		t.Fatalf("event caught should be '%s' and target '%s' but got: [%s|%s] ", expectedAction, expectedTarget, action, target)
 	}
 }
 
@@ -169,5 +176,4 @@ func writeBigFile(path, content string, errchan chan error) {
 		errchan <- err
 		return
 	}
-	return
 }

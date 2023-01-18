@@ -10,6 +10,11 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
+const (
+	exitSuccess = 0
+	exitFailure = 1
+)
+
 type claptrap struct {
 	watcher *watcher
 
@@ -31,7 +36,7 @@ func newClaptrap(path string, handler func(string, string, string)) (*claptrap, 
 	events := make(chan *event)
 	sigchan := make(chan os.Signal, 1)
 
-	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(sigchan, syscall.SIGINT, syscall.SIGTERM)
 
 	w, err := newWatcher(path, events, errors)
 	if err != nil {
@@ -68,11 +73,9 @@ func (c *claptrap) clap(event *event) {
 		case fsnotify.Remove.String():
 			action = fsnotify.Remove.String()
 			timestamp = ts
-			break
 		case fsnotify.Rename.String():
 			action = fsnotify.Rename.String()
 			timestamp = ts
-			break
 		}
 	}
 
@@ -94,44 +97,37 @@ func (c *claptrap) clap(event *event) {
 	if c.testchan != nil && atomic.LoadUint32(&c.clapMustStop) == 0 {
 		c.testchan <- [3]string{action, event.name, timestamp}
 	}
-
-	return
 }
 
-func (c *claptrap) trap() {
+func (c *claptrap) trap() int {
 	go c.watcher.watch()
 
 	for {
 		select {
 		case sig, ok := <-c.sigchan:
 			if !ok {
-				log.Fatal("unexpected error occurred on signal channel")
-				return
+				log.Println("unexpected error occurred on signal channel")
+				return exitFailure
 			}
 
 			atomic.StoreUint32(&c.clapMustStop, 1)
 
 			if err := c.watcher.stop(); err != nil {
-				log.Printf("failed to gracefully stop the watcher: %s", err.Error())
+				log.Printf("failed to gracefully stop the watcher: %s", err)
+				return exitFailure
 			}
 
-			close(c.sigchan)
-			close(c.errors)
-			close(c.events)
-
-			if c.testMode {
-				return
-			}
-
-			os.Exit(convertSignalToInt(sig))
-			return
+			defer close(c.sigchan)
+			defer close(c.errors)
+			defer close(c.events)
+			return convertSignalToInt(sig)
 		case event, ok := <-c.events:
 			if ok && event != nil {
 				go c.clap(event)
 			}
 		case err, ok := <-c.errors:
 			if ok && err != nil {
-				log.Printf("error: %s", err.Error())
+				log.Printf("error: %s", err)
 			}
 		}
 	}

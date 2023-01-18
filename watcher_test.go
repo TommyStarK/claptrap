@@ -23,25 +23,21 @@ const (
 
 func TestInvalidWatcherInstanciation(t *testing.T) {
 	if _, err := newWatcher("", nil, nil); err == nil {
-		t.Log("watcher instanciation should have failed, invalid path: received empty string")
-		t.Fail()
+		t.Fatal("watcher instanciation should have failed, invalid path: received empty string")
 	}
 
 	if _, err := newWatcher("dummy", nil, nil); err == nil {
-		t.Log("watcher instanciation should have failed, invalid events channel: received nil")
-		t.Fail()
+		t.Fatal("watcher instanciation should have failed, invalid events channel: received nil")
 	}
 
 	eventsChannel := make(chan *event)
 	if _, err := newWatcher("dummy", eventsChannel, nil); err == nil {
-		t.Log("watcher instanciation should have failed, invalid errors channel: received nil")
-		t.Fail()
+		t.Fatal("watcher instanciation should have failed, invalid errors channel: received nil")
 	}
 
 	errorsChannel := make(chan error)
 	if _, err := newWatcher("dummy", eventsChannel, errorsChannel); err == nil {
-		t.Log("watcher instanciation should have failed, invalid path: does not exist or incorrect permissions")
-		t.Fail()
+		t.Fatal("watcher instanciation should have failed, invalid path: does not exist or incorrect permissions")
 	}
 }
 
@@ -54,73 +50,48 @@ func TestWatcherBehavior(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	stopWatchErr := make(chan chan struct{})
-	go func() {
-		for {
-			select {
-			case ch := <-stopWatchErr:
-				ch <- struct{}{}
-				return
-			case err, ok := <-errch:
-				if !ok || err == nil {
-					t.Log("unexpected error occurred on error channel")
-					t.Fail()
-					continue
-				}
-				t.Log(err)
-				t.Fail()
-			}
-		}
-	}()
+	triggerWrite := make(chan chan struct{}, 1)
+	triggerRename := make(chan chan struct{}, 1)
+	triggerRemove := make(chan chan struct{}, 1)
+	witness := make(chan struct{}, 1)
 
 	go testWatcher.watch()
 
-	triggerWrite := make(chan chan struct{})
-	go func() {
+	go func(triggerWrite chan chan struct{}) {
 		writeDone := <-triggerWrite
 		writeFile(testDataPath+"/foo", testContent, errch)
 		writeDone <- struct{}{}
-		return
-	}()
+	}(triggerWrite)
 
-	triggerRename := make(chan chan struct{})
-	go func() {
+	go func(triggerRename chan chan struct{}) {
 		renameDone := <-triggerRename
 		renameFile(testDataPath+"/foo", testDataPath+"/bar", errch)
 		renameDone <- struct{}{}
-	}()
+	}(triggerRename)
 
-	triggerRemove := make(chan chan struct{})
-	go func() {
+	go func(triggerRemove chan chan struct{}) {
 		removeDone := <-triggerRemove
 		removeFile(testDataPath+"/bar", errch)
 		removeDone <- struct{}{}
-		return
-	}()
+	}(triggerRemove)
 
-	witness := make(chan struct{})
 	triggerWrite <- witness
 	<-witness
 	close(triggerWrite)
-	processWatcherResult(fsnotify.Create, evch, t)
+	processWatcherResult(t, fsnotify.Create, evch)
 
 	triggerRename <- witness
 	<-witness
 	close(triggerRename)
-	processWatcherResult(fsnotify.Rename, evch, t)
+	processWatcherResult(t, fsnotify.Rename, evch)
 
 	triggerRemove <- witness
 	<-witness
 	close(triggerRemove)
-	processWatcherResult(fsnotify.Remove, evch, t)
-
-	stopWatchErr <- witness
-	<-witness
-	close(stopWatchErr)
+	processWatcherResult(t, fsnotify.Remove, evch)
 
 	if err := testWatcher.stop(); err != nil {
-		t.Log(err)
-		t.Fail()
+		t.Fatal(err)
 	}
 
 	close(errch)
@@ -128,17 +99,14 @@ func TestWatcherBehavior(t *testing.T) {
 	close(witness)
 }
 
-func processWatcherResult(op fsnotify.Op, ch chan *event, t *testing.T) {
+func processWatcherResult(t *testing.T, op fsnotify.Op, ch chan *event) {
 	event, ok := <-ch
 
 	if !ok || event == nil {
-		t.Log("unexpected error occurred on event channel")
-		t.Fail()
-		return
+		t.Fatal("unexpected error occurred on event channel")
 	}
 	if timestamp, ok := event.trace[op]; !ok || len(timestamp) == 0 {
-		t.Logf("event %s should have been detected and timestamp should not be empty", op.String())
-		t.Fail()
+		t.Fatalf("event %s should have been detected and timestamp should not be empty", op.String())
 	}
 }
 
@@ -166,7 +134,6 @@ func writeFile(path, content string, errchan chan error) {
 		errchan <- err
 		return
 	}
-	return
 }
 
 func renameFile(oldpath, newpath string, errchan chan error) {
@@ -174,7 +141,6 @@ func renameFile(oldpath, newpath string, errchan chan error) {
 		errchan <- err
 		return
 	}
-	return
 }
 
 func removeFile(path string, errchan chan error) {
@@ -182,5 +148,4 @@ func removeFile(path string, errchan chan error) {
 		errchan <- err
 		return
 	}
-	return
 }

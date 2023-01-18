@@ -3,11 +3,11 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 	"plugin"
 )
 
 func main() {
-
 	var (
 		path       string
 		pluginPath string
@@ -19,48 +19,39 @@ func main() {
 
 	if len(path) == 0 {
 		log.Fatal("missing file/directory path")
-		return
 	}
 
 	if len(pluginPath) == 0 {
 		log.Fatal("missing plugin path")
-		return
 	}
 
 	p, err := plugin.Open(pluginPath)
 	if err != nil {
-		log.Fatalf("failed to open plugin (%s): %s", pluginPath, err.Error())
-		return
+		log.Fatalf("failed to open plugin (%s): %s", pluginPath, err)
 	}
 
 	if p == nil {
-		log.Fatal("unexpected error occurred")
-		return
+		log.Fatal("unexpected error occurred, failed to open go plugin")
 	}
 
 	handle, err := p.Lookup("Handle")
 	if err != nil {
-		log.Fatalf("unable to find symbol 'Handle': %s", err.Error())
-		return
+		log.Fatalf("unable to find symbol 'Handle': %s", err)
 	}
 
 	if handle == nil {
-		log.Fatal("unexpected error occurred")
-		return
+		log.Fatal("unexpected error occurred, failed to retrieve expected function")
 	}
 
 	handler, ok := handle.(func(string, string, string))
 	if !ok {
 		log.Fatal("unable to retrieve from symbol 'Handle', a function with the following signature: func(string, string, string)")
-		return
 	}
 
 	app, err := newClaptrap(path, handler)
 	if err != nil {
 		log.Fatal(err)
-		return
 	}
 
-	app.trap()
-	return
+	os.Exit(app.trap())
 }
